@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STUDIO - 크리에이티브 기술 스튜디오</title>
+  <meta name="description" content="웹, 모바일, 데이터 분야 전문 크리에이티브 기술 스튜디오">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="assets/cdn/axios.js"></script>
+  <script src="utils/axiosUtil.js"></script>
+  <!-- yup: base/app.js에서 jsDelivr ESM 동적 import -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/vue-loading.css">
+  <style>:root { --vue-loading-accent: #34d399; --vue-loading-glow: rgba(52, 211, 153, 0.22); }</style>
+</head>
+<body>
+<div id="vue-app-loading" class="vue-app-loading" role="status" aria-busy="true" aria-live="polite">
+  <div class="vue-app-loading-inner">
+    <div class="vue-app-loading-spinner" aria-hidden="true"></div>
+    <p class="vue-app-loading-text">로딩 중…</p>
+  </div>
+</div>
+<div id="app">
+
+  <!-- Toast notification (bottom-right) -->
+  <div v-if="toast.show" class="toast-wrap" :class="'toast-'+toast.type">
+    <span class="toast-icon">{{ toast.type==='success'?'✓':toast.type==='error'?'✗':toast.type==='warning'?'⚠':'ℹ' }}</span>
+    <span>{{ toast.msg }}</span>
+  </div>
+
+  <!-- Design Alert Modal -->
+  <div v-if="alertState.show" class="modal-overlay" @click.self="closeAlert">
+    <div class="modal-box">
+      <div class="modal-icon" :class="'icon-'+alertState.type">{{ alertState.type==='success'?'✓':alertState.type==='error'?'✗':alertState.type==='warning'?'⚠':'ℹ' }}</div>
+      <h3 class="modal-title">{{ alertState.title }}</h3>
+      <p class="modal-msg">{{ alertState.msg }}</p>
+      <button @click="closeAlert" class="btn-emerald px-6 py-2 rounded-xl font-bold mt-2">확인</button>
+    </div>
+  </div>
+
+  <!-- Design Confirm Modal -->
+  <div v-if="confirmState.show" class="modal-overlay" @click.self="closeConfirm(false)">
+    <div class="modal-box">
+      <div class="modal-icon icon-warning">⚠</div>
+      <h3 class="modal-title">{{ confirmState.title }}</h3>
+      <p class="modal-msg">{{ confirmState.msg }}</p>
+      <div class="flex gap-3 justify-center mt-2">
+        <button @click="closeConfirm(false)" class="btn-outline px-6 py-2 rounded-xl font-bold">취소</button>
+        <button @click="closeConfirm(true)" class="btn-emerald px-6 py-2 rounded-xl font-bold">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- blog detail is shown as a dedicated page (no popup modal) -->
+
+  <!-- App Layout -->
+  <div style="min-height:100vh;display:flex;flex-direction:column;background:var(--bg-base)">
+
+    <app-header></app-header>
+
+    <!-- Body (min-height:0 → flex 열에서 본문 높이 붕괴 방지) -->
+    <div class="home-body-row" style="flex:1;min-height:0;display:flex;overflow:hidden;position:relative">
+
+      <app-sidebar></app-sidebar>
+
+      <!-- Main -->
+      <div class="layout-main home-main" style="flex:1;min-width:0;min-height:0;overflow-x:hidden;overflow-y:auto">
+
+        <!-- HTML은 커스텀 태그를 self-close 하지 않음; /> 만으로는 형제가 아니라 중첩으로 파싱되어 본문이 사라짐 -->
+        <page-home v-show="page==='home'"></page-home>
+        <page-about v-show="page==='about'"></page-about>
+        <page-services v-show="page==='services'"></page-services>
+        <page-portfolio v-show="page==='portfolio'"></page-portfolio>
+        <page-blog v-show="page==='blog'"></page-blog>
+        <page-blog-detail v-show="page==='blogDetail'"></page-blog-detail>
+        <page-contact v-show="page==='contact'"></page-contact>
+
+      </div>
+    </div>
+
+    <app-footer></app-footer>
+
+  </div>
+</div>
+
+<script src="utils/cmUtil.js"></script>
+<script src="base/config.js"></script>
+<script src="js/index.js"></script>
+<script src="pages/Home.js"></script>
+<script src="pages/About.js"></script>
+<script src="pages/Services.js"></script>
+<script src="pages/Portfolio.js"></script>
+<script src="pages/Blog.js"></script>
+<script src="pages/BlogDetail.js"></script>
+<script src="pages/Contact.js"></script>
+<script src="layout/LayoutHeader.js"></script>
+<script src="layout/LayoutSidebar.js"></script>
+<script src="layout/LayoutFooter.js"></script>
+<script src="base/app.js"></script>
+</body>
+</html>

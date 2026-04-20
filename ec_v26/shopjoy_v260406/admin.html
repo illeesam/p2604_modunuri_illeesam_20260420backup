@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopJoy Admin</title>
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       사이트 기본값 설정 (변경 시 이 한 줄만 수정)
+       ═══════════════════════════════════════════════════════════════════ */
+    const DEFAULT_ADMIN_SITE_NO = '01';
+    /* ADMIN_SITE_NO — URL ?ADMIN_SITE_NO=02 로 오버라이드 가능, localStorage 영속 */
+    (function(){
+      try {
+        var qs = new URLSearchParams(window.location.search);
+        var v = qs.get('ADMIN_SITE_NO');
+        if (v) {
+          window.ADMIN_SITE_NO = v;
+          try { localStorage.setItem('modu-admin-site_no', v); } catch(_){}
+          try {
+            qs.delete('ADMIN_SITE_NO');
+            var newSearch = qs.toString();
+            history.replaceState(null, '', window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash);
+          } catch(_){}
+        } else {
+          var saved = null;
+          try { saved = localStorage.getItem('modu-admin-site_no'); } catch(_){}
+          window.ADMIN_SITE_NO = saved || DEFAULT_ADMIN_SITE_NO;
+          if (!saved) { try { localStorage.setItem('modu-admin-site_no', DEFAULT_ADMIN_SITE_NO); } catch(_){} }
+        }
+      } catch(e) { window.ADMIN_SITE_NO = DEFAULT_ADMIN_SITE_NO; }
+      /* ADMIN_SITE_NO 기준 CSS 로드 */
+      document.write('<link rel="stylesheet" href="assets/css/adminGlobalStyle' + window.ADMIN_SITE_NO + '.css">');
+    })();
+    /* 다른 탭에서 SITE_NO 변경 시 자동 반영 */
+    window.addEventListener('storage', function(e){
+      if ((e.key === 'modu-admin-site_no' || e.key === 'modu-front-site_no') && e.newValue !== e.oldValue) {
+        location.reload();
+      }
+    });
+  </script>
+  <script src="assets/cdn/pkg/vue/3.4.21/vue.global.prod.js"></script>
+  <script src="assets/cdn/pkg/axios/1.7.9/axios.min.js"></script>
+  <script src="assets/cdn/pkg/yup/1.0.0.shim/yup.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/cdn/pkg/quill/1.3.7/quill.snow.css">
+  <script src="assets/cdn/pkg/quill/1.3.7/quill.min.js"></script>
+  <script src="assets/cdn/pkg/marked/11.1.1/marked.min.js"></script>
+  <script src="assets/cdn/pkg/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+  <script src="assets/cdn/pkg/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    #_boot_loading { position:fixed; inset:0; z-index:99999;
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+      background:#1a1d24; font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif; }
+    #_boot_loading .spin { width:44px; height:44px; border-radius:50%;
+      border:3px solid rgba(255,255,255,0.12); border-top-color:#e8587a;
+      animation:_bootspin .8s linear infinite; }
+    #_boot_loading .txt { font-size:14px; color:#cfd3dc; letter-spacing:0.02em; font-weight:500; }
+    @keyframes _bootspin { to { transform: rotate(360deg); } }
+    #_boot_loading.done { opacity:0; transition:opacity .25s; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div id="_boot_loading" role="status" aria-busy="true">
+    <div class="spin" aria-hidden="true"></div>
+    <div class="txt">로딩 중…</div>
+  </div>
+  <div id="app"></div>
+  <script src="pages/base/adminError404.js"></script>
+  <script src="pages/base/adminError401.js"></script>
+  <script src="pages/base/adminError500.js"></script>
+  <script src="pages/admin/AdminData.js"></script>
+  <script src="utils/adminAxios.js"></script>
+  <script src="utils/adminUtil.js"></script>
+  <script src="components/modals/BaseModal.js"></script>
+  <script src="pages/admin/AdminModals.js"></script>
+  <script src="pages/admin/ec/mb/MbMemberMng.js"></script>
+  <script src="pages/admin/ec/mb/MbMemberDtl.js"></script>
+  <script src="pages/admin/ec/mb/MbMemberHist.js"></script>
+  <script src="pages/admin/ec/mb/MbMemGradeMng.js"></script>
+  <script src="pages/admin/ec/mb/MbMemGroupMng.js"></script>
+  <script src="pages/admin/ec/pd/PdProdMng.js"></script>
+  <script src="pages/admin/ec/pd/PdProdDtl.js"></script>
+  <script src="pages/admin/ec/pd/PdProdHist.js"></script>
+  <script src="pages/admin/ec/pd/PdDlivTmpltMng.js"></script>
+  <script src="pages/admin/ec/pd/PdBundleMng.js"></script>
+  <script src="pages/admin/ec/pd/PdSetMng.js"></script>
+  <script src="pages/admin/ec/pd/PdReviewMng.js"></script>
+  <script src="pages/admin/ec/pd/PdQnaMng.js"></script>
+  <script src="pages/admin/ec/pd/PdRestockNotiMng.js"></script>
+  <script src="pages/admin/ec/pd/PdTagMng.js"></script>
+  <script src="pages/admin/ec/od/OdOrderMng.js"></script>
+  <script src="pages/admin/ec/od/OdOrderDtl.js"></script>
+  <script src="pages/admin/ec/od/OdOrderHist.js"></script>
+  <script src="pages/admin/ec/od/OdClaimMng.js"></script>
+  <script src="pages/admin/ec/od/OdClaimDtl.js"></script>
+  <script src="pages/admin/ec/od/OdClaimHist.js"></script>
+  <script src="pages/admin/ec/od/OdDlivMng.js"></script>
+  <script src="pages/admin/ec/od/OdDlivDtl.js"></script>
+  <script src="pages/admin/ec/od/OdDlivHist.js"></script>
+  <script src="pages/admin/ec/pm/PmCouponMng.js"></script>
+  <script src="pages/admin/ec/pm/PmCouponDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmCacheMng.js"></script>
+  <script src="pages/admin/ec/pm/PmCacheDtl.js"></script>
+  <script src="components/disp/DispX01Ui.js"></script>
+  <script src="pages/admin/ec/dp/DpDispPanelMng.js"></script>
+  <script src="pages/admin/ec/dp/DpDispPanelDtl.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetLibMng.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetLibDtl.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetLibPreview.js"></script>
+  <script src="pages/admin/ec/dp/DpDispAreaPreview.js"></script>
+  <script src="pages/admin/ec/dp/DpDispUiPreview.js"></script>
+  <script src="pages/admin/ec/dp/DpDispUiSimul.js"></script>
+  <script src="pages/admin/ec/dp/DpDispPanelPreview.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetPreview.js"></script>
+  <script src="pages/admin/ec/dp/DpDispAreaMng.js"></script>
+  <script src="pages/admin/ec/dp/DpDispAreaDtl.js"></script>
+  <script src="pages/admin/ec/dp/DpDispUiMng.js"></script>
+  <script src="pages/admin/ec/dp/DpDispUiDtl.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetMng.js"></script>
+  <script src="pages/admin/ec/dp/DpDispWidgetDtl.js"></script>
+  <script src="pages/admin/ec/dp/DpDispRelationMng.js"></script>
+  <script src="pages/admin/ec/pm/PmEventMng.js"></script>
+  <script src="pages/admin/ec/pm/PmEventDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmPlanMng.js"></script>
+  <script src="pages/admin/ec/pm/PmPlanDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmDiscntMng.js"></script>
+  <script src="pages/admin/ec/pm/PmDiscntDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmSaveMng.js"></script>
+  <script src="pages/admin/ec/pm/PmSaveDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmGiftMng.js"></script>
+  <script src="pages/admin/ec/pm/PmGiftDtl.js"></script>
+  <script src="pages/admin/ec/pm/PmVoucherMng.js"></script>
+  <script src="pages/admin/ec/st/StConfigMng.js"></script>
+  <script src="pages/admin/ec/st/StRawMng.js"></script>
+  <script src="pages/admin/ec/st/StSettleAdjMng.js"></script>
+  <script src="pages/admin/ec/st/StSettleEtcAdjMng.js"></script>
+  <script src="pages/admin/ec/st/StSettleCloseMng.js"></script>
+  <script src="pages/admin/ec/st/StSettlePayMng.js"></script>
+  <script src="pages/admin/ec/st/StStatusMng.js"></script>
+  <script src="pages/admin/ec/st/StReconOrderMng.js"></script>
+  <script src="pages/admin/ec/st/StReconPayMng.js"></script>
+  <script src="pages/admin/ec/st/StReconClaimMng.js"></script>
+  <script src="pages/admin/ec/st/StReconVendorMng.js"></script>
+  <script src="pages/admin/ec/st/StErpGenMng.js"></script>
+  <script src="pages/admin/ec/st/StErpViewMng.js"></script>
+  <script src="pages/admin/ec/st/StErpReconMng.js"></script>
+  <script src="pages/admin/ec/pm/PmVoucherDtl.js"></script>
+  <script src="pages/admin/ec/mb/MbCustInfoMng.js"></script>
+  <script src="pages/admin/sy/SyContactMng.js"></script>
+  <script src="pages/admin/sy/SyContactDtl.js"></script>
+  <script src="pages/admin/ec/cm/CmChattMng.js"></script>
+  <script src="pages/admin/ec/cm/CmChattDtl.js"></script>
+  <script src="pages/admin/ec/cm/CmBltnMng.js"></script>
+  <script src="pages/admin/sy/SySiteMng.js"></script>
+  <script src="pages/admin/sy/SySiteDtl.js"></script>
+  <script src="pages/admin/sy/SyCodeMng.js"></script>
+  <script src="pages/admin/sy/SyCodeDtl.js"></script>
+  <script src="pages/admin/sy/SyBrandMng.js"></script>
+  <script src="pages/admin/sy/SyAttachMng.js"></script>
+  <script src="pages/admin/sy/SyTemplateMng.js"></script>
+  <script src="pages/admin/sy/SyTemplateDtl.js"></script>
+  <script src="pages/admin/sy/SyVendorMng.js"></script>
+  <script src="pages/admin/sy/SyVendorDtl.js"></script>
+  <script src="pages/admin/sy/SyBizMng.js"></script>
+  <script src="pages/admin/sy/SyBizUserMng.js"></script>
+  <script src="pages/admin/ec/pd/PdCategoryMng.js"></script>
+  <script src="pages/admin/ec/pd/PdCategoryDtl.js"></script>
+  <script src="pages/admin/ec/pd/PdCategoryProdMng.js"></script>
+  <script src="pages/admin/sy/SyDashboardMng.js"></script>
+  <script src="pages/admin/DashboardAdminEc01.js"></script>
+  <script src="pages/admin/DashboardAdminEc02.js"></script>
+  <script src="pages/admin/DashboardAdminEc03.js"></script>
+  <script src="pages/admin/sy/SyUserMng.js"></script>
+  <script src="pages/admin/sy/SyUserDtl.js"></script>
+  <script src="pages/admin/sy/SyBatchMng.js"></script>
+  <script src="pages/admin/sy/SyBatchDtl.js"></script>
+  <script src="pages/admin/sy/SyBatchHist.js"></script>
+  <script src="pages/admin/sy/SyMemberLoginHist.js"></script>
+  <script src="pages/admin/sy/SyUserLoginHist.js"></script>
+  <script src="pages/admin/sy/SyPostman.js"></script>
+  <script src="pages/admin/ec/cm/CmNoticeMng.js"></script>
+  <script src="pages/admin/ec/cm/CmNoticeDtl.js"></script>
+  <script src="pages/admin/sy/SyAlarmMng.js"></script>
+  <script src="pages/admin/sy/SyAlarmDtl.js"></script>
+  <script src="pages/admin/sy/SyPropMng.js"></script>
+  <script src="pages/admin/sy/SyPathMng.js"></script>
+  <script src="pages/admin/sy/SyI18nMng.js"></script>
+  <script src="pages/admin/sy/SyBbmMng.js"></script>
+  <script src="pages/admin/sy/SyBbmDtl.js"></script>
+  <script src="pages/admin/sy/SyBbsMng.js"></script>
+  <script src="pages/admin/sy/SyBbsDtl.js"></script>
+  <script src="pages/admin/sy/SyDeptMng.js"></script>
+  <script src="pages/admin/sy/SyMenuMng.js"></script>
+  <script src="pages/admin/sy/SyRoleMng.js"></script>
+  <script src="components/comp/BaseComp.js"></script>
+  <script src="components/disp/DispX04Widget.js"></script>
+  <script src="components/dispWidgets/BarcodeWidget.js"></script>
+  <script src="components/dispWidgets/CountdownWidget.js"></script>
+  <script src="components/disp/DispX03Panel.js"></script>
+  <script src="components/disp/DispX02Area.js"></script>
+  <script src="pages/admin/AdminApp.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>파티룸 스페이스 - 프리미엄 공간 대여</title>
+  <meta name="description" content="파티, 스터디, 회의, 촬영을 위한 프리미엄 공간 대여 서비스. 시간당/일당/장기 할인.">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- yup: v1 UMD 없음 → base/app.js에서 ESM 동적 import -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/vue-loading.css">
+  <style>:root { --vue-loading-accent: #c9a84c; --vue-loading-glow: rgba(201, 168, 76, 0.22); }</style>
+</head>
+<body>
+
+<div id="vue-app-loading" class="vue-app-loading" role="status" aria-busy="true" aria-live="polite">
+  <div class="vue-app-loading-inner">
+    <div class="vue-app-loading-spinner" aria-hidden="true"></div>
+    <p class="vue-app-loading-text">로딩 중…</p>
+  </div>
+</div>
+
+<div id="app">
+  <!-- ════════════════════════════════════════
+       HEADER
+       ════════════════════════════════════════ -->
+  <header id="app-header" class="glass">
+    <!-- Hamburger (mobile) -->
+    <button
+      class="hide-desktop"
+      @click="toggleMobileMenu"
+      style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-primary);font-size:1.2rem;flex-shrink:0;"
+      aria-label="메뉴"
+    >☰</button>
+
+    <!-- Sidebar collapse toggle (desktop) -->
+    <button
+      class="hide-mobile"
+      @click="sidebarOpen = !sidebarOpen"
+      style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-muted);font-size:1rem;flex-shrink:0;"
+      :title="sidebarOpen ? '사이드바 접기' : '사이드바 열기'"
+    >{{ sidebarOpen ? '◀' : '▶' }}</button>
+
+    <!-- Logo -->
+    <div
+      @click="navigate('home')"
+      style="cursor:pointer;display:flex;align-items:center;gap:8px;flex-shrink:0;"
+    >
+      <span style="font-size:1.25rem;">🎉</span>
+      <span style="font-weight:800;font-size:0.95rem;letter-spacing:-0.02em;color:var(--text-primary);">
+        파티룸 <span class="gradient-text">스페이스</span>
+      </span>
+    </div>
+
+    <!-- Top nav (desktop) -->
+    <nav class="hide-mobile" style="display:flex;align-items:center;gap:2px;flex:1;justify-content:center;flex-wrap:nowrap;overflow:hidden;">
+      <span
+        v-for="m in config.topMenu"
+        :key="m.menuId"
+        class="nav-link"
+        :class="{ active: page === m.menuId }"
+        @click="navigate(m.menuId)"
+      >{{ m.menuName }}</span>
+    </nav>
+
+    <!-- Right actions -->
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:auto;">
+      <button
+        @click="toggleTheme"
+        style="background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:8px;font-size:1.1rem;color:var(--text-secondary);transition:var(--transition);"
+        :title="theme === 'light' ? '다크 모드' : '라이트 모드'"
+      >{{ theme === 'light' ? '🌙' : '☀️' }}</button>
+      <button
+        class="btn-gold hide-mobile"
+        style="font-size:0.8rem;padding:7px 16px;"
+        @click="navigate('booking')"
+      >예약하기</button>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════
+       BODY WRAPPER (sidebar + main)
+       ════════════════════════════════════════ -->
+  <div class="partyroom-body-row">
+
+    <!-- Mobile sidebar overlay -->
+    <div
+      id="sidebar-overlay"
+      :class="{ active: mobileOpen }"
+      @click="closeMobileMenu"
+    ></div>
+
+    <!-- SIDEBAR -->
+    <aside
+      id="sidebar"
+      :class="{ collapsed: !sidebarOpen, open: mobileOpen }"
+      style="display:flex;flex-direction:column;min-height:0;align-self:stretch;overflow:hidden;"
+      @click.stop
+    >
+      <!-- Logo area inside sidebar -->
+      <div style="padding:16px 12px 8px;border-bottom:1px solid var(--border);">
+        <div
+          v-show="sidebarOpen || mobileOpen"
+          style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;color:var(--text-muted);text-transform:uppercase;padding:0 4px;"
+        >메뉴</div>
+      </div>
+
+      <!-- Sidebar menu groups -->
+      <nav class="sidebar-inner" style="padding:8px 8px;flex:1;min-height:0;overflow-y:auto;">
+        <template v-for="section in config.sidebarMenu" :key="section.section">
+          <div class="sidebar-section-label" v-show="sidebarOpen || mobileOpen">
+            {{ section.section }}
+          </div>
+          <button
+            type="button"
+            v-for="item in section.items"
+            :key="item.menuId"
+            class="sidebar-link"
+            :class="{ active: page === item.menuId }"
+            @click.stop="navigate(item.menuId, { replace: true })"
+            :data-tip="item.menuName"
+            :aria-label="item.menuName"
+          >
+            <span class="sidebar-link-icon" style="font-size:1rem;flex-shrink:0;">{{ item.icon }}</span>
+            <span v-show="sidebarOpen || mobileOpen" style="font-size:0.85rem;">{{ item.menuName }}</span>
+          </button>
+          <div class="gold-divider" style="margin:6px 8px;"></div>
+        </template>
+
+        <!-- Booking shortcut -->
+        <button
+          type="button"
+          class="btn-gold"
+          style="width:calc(100% - 16px);margin:8px;font-size:0.82rem;padding:9px 12px;justify-content:center;"
+          @click.stop="navigate('booking', { replace: true })"
+          v-show="sidebarOpen || mobileOpen"
+        >📅 예약하기</button>
+      </nav>
+
+      <!-- Sidebar footer -->
+      <div
+        v-show="sidebarOpen || mobileOpen"
+        style="padding:12px 16px;border-top:1px solid var(--border);font-size:0.72rem;color:var(--text-muted);line-height:1.6;"
+      >
+        <div>📞 {{ config.tel }}</div>
+        <div>✉️ {{ config.email }}</div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="layout-main partyroom-main">
+      <page-home v-show="page === 'home'" />
+      <page-about v-show="page === 'about'" />
+      <page-products v-show="page === 'products'" />
+      <page-detail v-show="page === 'detail'" />
+      <page-space v-show="page === 'space'" />
+      <page-blog v-show="page === 'blog'" />
+      <page-blog-detail v-show="page === 'blogDetail'" />
+      <page-location v-show="page === 'location'" />
+      <page-contact v-show="page === 'contact'" />
+      <page-faq v-show="page === 'faq'" />
+      <page-booking v-show="page === 'booking'" />
+    </main>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       TOAST
+       ════════════════════════════════════════ -->
+  <transition name="toast-fade">
+    <div
+      v-if="toast.show"
+      class="toast-wrap"
+      :class="'toast-' + toast.type"
+    >
+      <span>
+        {{ toast.type === 'success' ? '✓' : toast.type === 'error' ? '✕' : toast.type === 'warning' ? '⚠' : 'ℹ' }}
+      </span>
+      <span>{{ toast.msg }}</span>
+    </div>
+  </transition>
+
+  <!-- ════════════════════════════════════════
+       ALERT MODAL
+       ════════════════════════════════════════ -->
+  <transition name="modal-fade">
+    <div v-if="alertState.show" class="modal-overlay" @click.self="closeAlert">
+      <div class="modal-box">
+        <div class="modal-icon" :class="'icon-' + alertState.type">
+          {{ alertState.type === 'success' ? '✓' : alertState.type === 'error' ? '✕' : alertState.type === 'warning' ? '⚠' : 'ℹ' }}
+        </div>
+        <div class="modal-title">{{ alertState.title }}</div>
+        <div class="modal-msg">{{ alertState.msg }}</div>
+        <button class="btn-gold" style="width:100%;justify-content:center;" @click="closeAlert">확인</button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- ════════════════════════════════════════
+       CONFIRM MODAL
+       ════════════════════════════════════════ -->
+  <transition name="modal-fade">
+    <div v-if="confirmState.show" class="modal-overlay" @click.self="closeConfirm(false)">
+      <div class="modal-box">
+        <div class="modal-icon" :class="'icon-' + confirmState.type">
+          {{ confirmState.type === 'success' ? '✓' : confirmState.type === 'error' ? '✕' : confirmState.type === 'warning' ? '⚠' : 'ℹ' }}
+        </div>
+        <div class="modal-title">{{ confirmState.title }}</div>
+        <div class="modal-msg">{{ confirmState.msg }}</div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-outline" style="flex:1;justify-content:center;" @click="closeConfirm(false)">취소</button>
+          <button class="btn-gold" style="flex:1;justify-content:center;" @click="closeConfirm(true)">확인</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+</div><!-- #app -->
+
+<!-- ════════════════════════════════════════
+     Transition styles
+     ════════════════════════════════════════ -->
+<style>
+.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
+.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(12px); }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-active .modal-box,
+.modal-fade-leave-active .modal-box { transition: transform 0.25s; }
+.modal-fade-enter-from .modal-box  { transform: scale(0.92); }
+.modal-fade-leave-to  .modal-box   { transform: scale(0.95); }
+</style>
+
+<script src="assets/cdn/axios.js"></script>
+<script src="utils/axiosUtil.js"></script>
+<script src="utils/cmUtil.js"></script>
+<script src="base/config.js"></script>
+<script src="js/index.js"></script>
+<script src="pages/Home.js"></script>
+<script src="pages/About.js"></script>
+<script src="pages/Products.js"></script>
+<script src="pages/Detail.js"></script>
+<script src="pages/Space.js"></script>
+<script src="pages/Blog.js"></script>
+<script src="pages/BlogDetail.js"></script>
+<script src="pages/Location.js"></script>
+<script src="pages/Contact.js"></script>
+<script src="pages/Faq.js"></script>
+<script src="pages/Booking.js"></script>
+<script src="base/app.js"></script>
+</body>
+</html>

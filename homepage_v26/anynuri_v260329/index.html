@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnyNuri - 애니메이션 스튜디오</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- yup: 브라우저 UMD는 버전별 경로가 달라 base/app.js에서 ESM 동적 import 사용 -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/vue-loading.css">
+  <style>:root { --vue-loading-accent: #ff6b9d; --vue-loading-glow: rgba(255, 107, 157, 0.22); }</style>
+</head>
+<body>
+<div id="vue-app-loading" class="vue-app-loading" role="status" aria-busy="true" aria-live="polite">
+  <div class="vue-app-loading-inner">
+    <div class="vue-app-loading-spinner" aria-hidden="true"></div>
+    <p class="vue-app-loading-text">로딩 중…</p>
+  </div>
+</div>
+<div id="app">
+
+  <!-- ══ TOAST ══════════════════════════════════════════════ -->
+  <transition name="fade">
+    <div v-if="toast.show" class="toast-wrap" :class="'toast-' + toast.type">
+      <span v-if="toast.type==='success'">✅</span>
+      <span v-else-if="toast.type==='error'">❌</span>
+      <span v-else-if="toast.type==='warning'">⚠️</span>
+      <span v-else>ℹ️</span>
+      <span>{{ toast.msg }}</span>
+    </div>
+  </transition>
+
+  <!-- ══ ALERT MODAL ════════════════════════════════════════ -->
+  <transition name="fade">
+    <div v-if="alertState.show" class="modal-overlay" @click.self="closeAlert">
+      <div class="modal-box">
+        <div class="modal-icon" :class="'icon-' + alertState.type">
+          <span v-if="alertState.type==='success'">✓</span>
+          <span v-else-if="alertState.type==='error'">✕</span>
+          <span v-else-if="alertState.type==='warning'">!</span>
+          <span v-else>i</span>
+        </div>
+        <div class="modal-title">{{ alertState.title }}</div>
+        <div class="modal-msg" style="white-space:pre-line">{{ alertState.msg }}</div>
+        <button @click="closeAlert" class="btn-sakura w-full py-2 rounded-xl">확인</button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- ══ CONFIRM MODAL ══════════════════════════════════════ -->
+  <transition name="fade">
+    <div v-if="confirmState.show" class="modal-overlay" @click.self="closeConfirm(false)">
+      <div class="modal-box">
+        <div class="modal-icon" :class="'icon-' + confirmState.type">
+          <span v-if="confirmState.type==='warning'">!</span>
+          <span v-else>?</span>
+        </div>
+        <div class="modal-title">{{ confirmState.title }}</div>
+        <div class="modal-msg" style="white-space:pre-line">{{ confirmState.msg }}</div>
+        <div class="flex gap-3">
+          <button @click="closeConfirm(false)" class="btn-outline flex-1 py-2 rounded-xl">취소</button>
+          <button @click="closeConfirm(true)" class="btn-sakura flex-1 py-2 rounded-xl">확인</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- (blog detail is shown as a dedicated page, not a popup modal) -->
+
+  <!-- ══ OUTER SHELL ════════════════════════════════════════ -->
+  <div style="min-height:100vh;display:flex;flex-direction:column;background:var(--bg-base);color:var(--text-primary)">
+
+    <app-header></app-header>
+
+    <!-- ── BODY ROW ────────────────────────────────────────── -->
+    <div style="display:flex;flex:1;overflow:hidden;position:relative">
+
+      <app-sidebar></app-sidebar>
+
+      <!-- ── MAIN CONTENT ────────────────────────────────── -->
+      <main class="layout-main" style="flex:1;overflow-y:auto;min-width:0">
+        <!-- HTML 커스텀 태그는 self-close 시 형제가 중첩으로 파싱됨 -->
+        <page-home v-show="page==='home'"></page-home>
+        <page-about v-show="page==='about'"></page-about>
+        <page-works v-show="page==='works'"></page-works>
+        <page-portfolio v-show="page==='portfolio'"></page-portfolio>
+        <page-detail v-show="page==='detail'"></page-detail>
+        <page-blog v-show="page==='blog'"></page-blog>
+        <page-blog-detail v-show="page==='blogDetail'"></page-blog-detail>
+        <page-location v-show="page==='location'"></page-location>
+        <page-contact v-show="page==='contact'"></page-contact>
+        <page-faq v-show="page==='faq'"></page-faq>
+      </main><!-- /main -->
+    </div><!-- /body row -->
+
+    <app-footer></app-footer>
+
+  </div><!-- /outer shell -->
+</div><!-- /app -->
+
+<style>
+/* Vue fade transition */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
+
+<script src="assets/cdn/axios.js"></script>
+<script src="utils/axiosUtil.js"></script>
+<script src="utils/cmUtil.js"></script>
+<script src="base/config.js"></script>
+<script src="js/index.js"></script>
+<script src="pages/Home.js"></script>
+<script src="pages/About.js"></script>
+<script src="pages/Works.js"></script>
+<script src="pages/Portfolio.js"></script>
+<script src="pages/Detail.js"></script>
+<script src="pages/Blog.js"></script>
+<script src="pages/BlogDetail.js"></script>
+<script src="pages/Location.js"></script>
+<script src="pages/Contact.js"></script>
+<script src="pages/Faq.js"></script>
+<script src="layout/AppHeader.js"></script>
+<script src="layout/AppSidebar.js"></script>
+<script src="layout/AppFooter.js"></script>
+<script src="base/app.js"></script>
+</body>
+</html>

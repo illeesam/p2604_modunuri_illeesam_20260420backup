@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopJoy - 쇼핑의 즐거움</title>
+  <meta name="description" content="트렌디한 의류를 합리적인 가격으로. ShopJoy에서 나만의 스타일을 완성하세요.">
+  <script src="assets/cdn/pkg/vue/3.4.21/vue.global.prod.js"></script>
+  <script src="assets/cdn/pkg/vue-demi/0.14.10/vue-demi.iife.js"></script>
+  <script src="assets/cdn/pkg/pinia/2.1.7/pinia.iife.js"></script>
+  <script src="assets/cdn/pkg/postcode/2/postcode.v2.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap">
+  <script>
+    /* ═══════════════════════════════════════════════════════════════════
+       사이트 기본값 설정 (변경 시 이 한 줄만 수정)
+       ═══════════════════════════════════════════════════════════════════ */
+    const DEFAULT_FRONT_SITE_NO = '01';
+
+    /* /index.html → / 로 단축 (해시/쿼리는 유지) */
+    (function(){
+      try {
+        var p = window.location.pathname;
+        if (/\/index\.html$/i.test(p)) {
+          var newPath = p.replace(/index\.html$/i, '');
+          history.replaceState(null, '', newPath + window.location.search + window.location.hash);
+        }
+      } catch(_){}
+    })();
+    /* FRONT_SITE_NO — URL ?FRONT_SITE_NO=02 로 오버라이드 가능 */
+    (function(){
+      try {
+        var qs = new URLSearchParams(window.location.search);
+        var v = qs.get('FRONT_SITE_NO');
+        if (v) {
+          window.FRONT_SITE_NO = v;
+          try { localStorage.setItem('modu-front-site_no', v); } catch(_){}
+          try {
+            qs.delete('FRONT_SITE_NO');
+            var newSearch = qs.toString();
+            history.replaceState(null, '', window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash);
+          } catch(_){}
+        } else {
+          var saved = null;
+          try { saved = localStorage.getItem('modu-front-site_no'); } catch(_){}
+          window.FRONT_SITE_NO = saved || DEFAULT_FRONT_SITE_NO;
+        }
+      } catch(e) { window.FRONT_SITE_NO = DEFAULT_FRONT_SITE_NO; }
+      /* ADMIN_SITE_NO 기본값은 admin.html에서 전적으로 관리. front 진입 시 저장된 값만 읽음 (덮어쓰지 않음) */
+      try {
+        var savedA = null;
+        try { savedA = localStorage.getItem('modu-admin-site_no'); } catch(_){}
+        window.ADMIN_SITE_NO = savedA || '';
+      } catch(e) { window.ADMIN_SITE_NO = ''; }
+    })();
+    document.write('<link rel="stylesheet" href="assets/css/frontGlobalStyle' + window.FRONT_SITE_NO + '.css">');
+    /* 다른 탭에서 SITE_NO 변경 시 자동 반영 */
+    window.addEventListener('storage', function(e){
+      if ((e.key === 'modu-front-site_no' || e.key === 'modu-admin-site_no') && e.newValue !== e.oldValue) {
+        location.reload();
+      }
+    });
+  </script>
+  <!-- 초기 로딩 인디케이터: 외부 리소스 없이 즉시 표시 -->
+  <style>
+    #_boot_loading { position:fixed; inset:0; z-index:99999;
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+      background:#1a1d24; font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif; }
+    #_boot_loading .spin { width:44px; height:44px; border-radius:50%;
+      border:3px solid rgba(255,255,255,0.12); border-top-color:#e8587a;
+      animation:_bootspin .8s linear infinite; }
+    #_boot_loading .txt { font-size:14px; color:#cfd3dc; letter-spacing:0.02em; font-weight:500; }
+    @keyframes _bootspin { to { transform: rotate(360deg); } }
+    #_boot_loading.done { opacity:0; transition:opacity .25s; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div id="_boot_loading" role="status" aria-busy="true">
+    <div class="spin" aria-hidden="true"></div>
+    <div class="txt">로딩 중…</div>
+  </div>
+  <div id="app"></div>
+  <script src="assets/cdn/pkg/marked/11.1.1/marked.min.js"></script>
+  <script src="assets/cdn/pkg/axios/1.7.9/axios.min.js"></script>
+  <script src="utils/frontAxios.js"></script>
+  <script src="utils/frontCmUtil.js"></script>
+  <script src="base/frontConfig.js"></script>
+  <script src="js/index.js"></script>
+  <script src="base/stores/frontAuthStore.js"></script>
+  <script src="base/stores/frontMyStore.js"></script>
+  <script src="base/frontAuth.js"></script>
+  <script src="layout/frontAppHeader.js"></script>
+  <script src="layout/frontAppSidebar.js"></script>
+  <script src="layout/frontAppFooter.js"></script>
+  <script src="layout/frontMyLayout.js"></script>
+  <script src="pages/base/frontError404.js"></script>
+  <script src="pages/base/frontError401.js"></script>
+  <script src="pages/base/frontError500.js"></script>
+  <script>
+    /* FRONT_SITE_NO 기준 동적 페이지 스크립트 로드 */
+    (function(){
+      var n = window.FRONT_SITE_NO;
+      ['Home'+n, 'Prod'+n+'List', 'Prod'+n+'View'].forEach(function(name){
+        document.write('<script src="pages/' + name + '.js"><\/script>');
+      });
+    })();
+  </script>
+  <script src="pages/Cart.js"></script>
+  <script src="pages/Order.js"></script>
+  <script src="pages/Contact.js"></script>
+  <script src="pages/Faq.js"></script>
+  <script src="pages/Login.js"></script>
+  <script src="components/modals/BaseModal.js"></script>
+  <script src="components/comp/BaseComp.js"></script>
+  <script src="pages/my/MyOrder.js"></script>
+  <script src="pages/my/MyClaim.js"></script>
+  <script src="pages/my/MyCoupon.js"></script>
+  <script src="pages/my/MyCache.js"></script>
+  <script src="pages/my/MyContact.js"></script>
+  <script src="pages/my/MyChatt.js"></script>
+  <script src="pages/Like.js"></script>
+  <script src="pages/Event.js"></script>
+  <script src="pages/EventView.js"></script>
+  <script src="pages/Blog.js"></script>
+  <script src="pages/BlogView.js"></script>
+  <script src="pages/BlogEdit.js"></script>
+  <script src="pages/Location.js"></script>
+  <script src="pages/About.js"></script>
+  <script src="pages/admin/AdminData.js"></script>
+  <script src="components/disp/DispX04Widget.js"></script>
+  <script src="components/disp/DispX03Panel.js"></script>
+  <script src="components/disp/DispX02Area.js"></script>
+  <script src="components/disp/DispX01Ui.js"></script>
+  <!-- ■■■ 전시관련 페이지 주석해도 에러 없이 동작 ■■■ -->
+  <script src="pages/xd/DispUi01.js"></script>
+  <script src="pages/xd/DispUi02.js"></script>
+  <script src="pages/xd/DispUi03.js"></script>
+  <script src="pages/xd/DispUi04.js"></script>
+  <script src="pages/xd/DispUi05.js"></script>
+  <script src="pages/xd/DispUi06.js"></script>
+  <!-- ■■■ 샘플 페이지 주석해도 에러 없이 동작 ■■■ -->
+  <script src="pages/xs/Sample01.js"></script>
+  <script src="pages/xs/Sample02.js"></script>
+  <script src="pages/xs/Sample03.js"></script>
+  <script src="pages/xs/Sample04.js"></script>
+  <script src="pages/xs/Sample05.js"></script>
+  <script src="pages/xs/Sample06.js"></script>
+  <script src="pages/xs/Sample07.js"></script>
+  <!-- <script src="pages/xs/Sample08.js"></script> -->
+  <!-- <script src="pages/xs/Sample09.js"></script> -->
+  <!-- <script src="pages/xs/Sample10.js"></script> -->
+  <script src="pages/xs/Sample11.js"></script>
+  <script src="pages/xs/Sample12.js"></script>
+  <script src="pages/xs/Sample13.js"></script>
+  <script src="pages/xs/Sample14.js"></script>
+  <script src="pages/xs/Sample21.js"></script>
+  <script src="pages/xs/Sample22.js"></script>
+  <script src="pages/xs/Sample23.js"></script>
+  <script src="base/frontApp.js"></script>
+</body>
+</html>
